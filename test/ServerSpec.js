@@ -38,10 +38,11 @@ describe('', function() {
     /*************************************************************************************/
     /* TODO: Update user and password if different than on your local machine            */
     /*************************************************************************************/
-    db = mysql.createConnection({
+    db = mysql.createConnection({ 
       user: 'student',
       password: 'student',
-      database: 'shortly'
+      database: 'shortly',
+      server: 'localhost'
     });
 
     /**************************************************************************************/
@@ -64,13 +65,14 @@ describe('', function() {
   describe('Database Schema:', function() {
     it('contains a users table', function(done) {
       var queryString = 'SELECT * FROM users';
+      console.log(queryString);
       db.query(queryString, function(err, results) {
         if (err) { return done(err); }
 
         expect(results).to.deep.equal([]);
         done();
       });
-    });
+    }); 
 
     it('contains id, username, password columns', function(done) {
       var newUser = {
@@ -123,7 +125,7 @@ describe('', function() {
     });
   });
 
-  xdescribe('Account Creation:', function() {
+  describe('Account Creation:', function() {
 
     it('signup creates a new user record', function(done) {
       var options = {
@@ -140,6 +142,7 @@ describe('', function() {
         db.query(queryString, function(err, rows) {
           if (err) { done(err); }
           var user = rows[0];
+// console.log(rows)
           expect(user).to.exist;
           expect(user.username).to.equal('Samantha');
           done();
@@ -208,7 +211,7 @@ describe('', function() {
     });
   });
 
-  xdescribe('Account Login:', function() {
+  describe('Account Login:', function() {
 
     beforeEach(function(done) {
       var options = {
@@ -277,7 +280,7 @@ describe('', function() {
     });
   });
 
-  xdescribe('Sessions Schema:', function() {
+  describe('Sessions Schema:', function() {
     it('contains a sessions table', function(done) {
       var queryString = 'SELECT * FROM sessions';
       db.query(queryString, function(err, results) {
@@ -325,7 +328,7 @@ describe('', function() {
     });
   });
 
-  xdescribe('Express Middleware', function() {
+  describe('Express Middleware', function() {
     var cookieParser = require('../server/middleware/cookieParser.js');
     var createSession = require('../server/middleware/auth.js').createSession;
 
@@ -347,16 +350,21 @@ describe('', function() {
         var response = httpMocks.createResponse();
 
         cookieParser(requestWithoutCookies, response, function() {
+          console.log(requestWithoutCookies.cookies, '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2');
           var cookies = requestWithoutCookies.cookies;
           expect(cookies).to.be.an('object');
           expect(cookies).to.eql({});
+          done();
+
         });
+          console.log('a')
 
         cookieParser(requestWithCookies, response, function() {
           var cookies = requestWithCookies.cookies;
           expect(cookies).to.be.an('object');
           expect(cookies).to.eql({ shortlyid: '8a864482005bcc8b968f2b18f8f7ea490e577b20' });
         });
+          console.log('b')
 
         cookieParser(requestWithMultipleCookies, response, function() {
           var cookies = requestWithMultipleCookies.cookies;
@@ -379,6 +387,7 @@ describe('', function() {
         createSession(requestWithoutCookies, response, function() {
           var session = requestWithoutCookies.session;
           expect(session).to.exist;
+
           expect(session).to.be.an('object');
           expect(session.hash).to.exist;
           done();
@@ -480,7 +489,7 @@ describe('', function() {
     });
   });
 
-  xdescribe('Sessions and cookies', function() {
+  describe('Sessions and cookies', function() {
     var requestWithSession;
     var cookieJar;
 

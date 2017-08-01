@@ -5,7 +5,7 @@ const partials = require('express-partials');
 const bodyParser = require('body-parser');
 const Auth = require('./middleware/auth');
 const models = require('./models');
-
+const User = require('./models/user');
 const app = express();
 
 app.set('views', `${__dirname}/views`);
@@ -77,7 +77,54 @@ app.post('/links',
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.post('/signup', (req, res, next) => {
+  var username = req.body.username;
+  var password = req.body.password;
+  // var users = new Users();
+  User.create({username, password}).then((succes) => {
+    res.redirect('/');
+    
+  }).catch((failed) => {
+    res.redirect('/signup');
+  });
+  // next();
+});
 
+app.post('/login', (req, res, next) => {
+  // console.log(req, '*************');
+  var username = req.body.username;
+  var attempted = req.body.password;
+  // console.log(req)
+  var user = User.get({'username': username}).then((success) => {
+
+    if (!success) {
+      throw success;
+    }
+    var password = success.password;
+    var salt = success.salt;
+    models.Sessions.create().then( (result) => {
+      // console.log('FROM CREATE: ', result);
+    });
+   
+    // console.log(User.compare(attempted, password, salt));
+    if (User.compare(attempted, password, salt)) {
+      res.redirect('/');
+    } else {
+      res.redirect('/login');
+    }
+
+  }).catch((reject) => {
+    // console.log('reject!', reject);
+    res.redirect('/login');
+  });
+// .then((success) => {
+//     console.log('SUCCESS LOGIN', success);
+//     res.redirect('/');
+//   }).catch((failed) => {
+//     console.log('FAILED', failed);
+//     res.redirect('/login');
+//   });
+});
 
 
 /************************************************************/

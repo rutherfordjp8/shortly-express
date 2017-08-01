@@ -5,7 +5,8 @@ const database = 'shortly';
 
 const connection = mysql.createConnection({
   user: 'student',
-  password: 'student'
+  password: 'student',
+  server: 'localhost'
 });
 
 const db = Promise.promisifyAll(connection, { multiArgs: true });
