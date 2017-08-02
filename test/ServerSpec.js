@@ -65,7 +65,7 @@ describe('', function() {
   describe('Database Schema:', function() {
     it('contains a users table', function(done) {
       var queryString = 'SELECT * FROM users';
-      console.log(queryString);
+      // console.log(queryString);
       db.query(queryString, function(err, results) {
         if (err) { return done(err); }
 
@@ -350,21 +350,21 @@ describe('', function() {
         var response = httpMocks.createResponse();
 
         cookieParser(requestWithoutCookies, response, function() {
-          console.log(requestWithoutCookies.cookies, '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2');
+          // console.log(requestWithoutCookies.cookies, '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2');
           var cookies = requestWithoutCookies.cookies;
           expect(cookies).to.be.an('object');
           expect(cookies).to.eql({});
     
 
         });
-        console.log('a');
+        // console.log('a');
 
         cookieParser(requestWithCookies, response, function() {
           var cookies = requestWithCookies.cookies;
           expect(cookies).to.be.an('object');
           expect(cookies).to.eql({ shortlyid: '8a864482005bcc8b968f2b18f8f7ea490e577b20' });
         });
-        console.log('b');
+        // console.log('b');
 
         cookieParser(requestWithMultipleCookies, response, function() {
           var cookies = requestWithMultipleCookies.cookies;
@@ -400,6 +400,7 @@ describe('', function() {
 
         createSession(requestWithoutCookie, response, function() {
           var cookies = response.cookies;
+
           expect(cookies['shortlyid']).to.exist;
           expect(cookies['shortlyid'].value).to.exist;
           done();
@@ -576,7 +577,7 @@ describe('', function() {
     });
   });
 
-  xdescribe('Privileged Access:', function() {
+  describe('Privileged Access:', function() {
 
     it('Redirects to login page if a user tries to access the main page and is not signed in', function(done) {
       request('http://127.0.0.1:4568/', function(error, res, body) {
@@ -603,7 +604,7 @@ describe('', function() {
     });
   });
 
-  xdescribe('Link creation:', function() {
+  describe('Link creation:', function() {
 
     var cookies = request.jar();
     var requestWithSession = request.defaults({ jar: cookies });
@@ -616,7 +617,7 @@ describe('', function() {
       }
     };
 
-    xbeforeEach(function(done) {
+    beforeEach(function(done) {
       var options = {
         'method': 'POST',
         'followAllRedirects': true,

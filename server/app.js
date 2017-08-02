@@ -17,17 +17,20 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 
 
-app.get('/', 
+app.use(require('./middleware/cookieParser'));
+app.use(Auth.createSession);
+
+app.get('/', Auth.isAuth, 
 (req, res) => {
   res.render('index');
 });
 
-app.get('/create', 
+app.get('/create', Auth.isAuth,
 (req, res) => {
   res.render('index');
 });
 
-app.get('/links', 
+app.get('/links', Auth.isAuth,
 (req, res, next) => {
   models.Links.getAll()
     .then(links => {
@@ -38,9 +41,9 @@ app.get('/links',
     });
 });
 
-app.post('/links', 
-(req, res, next) => {
+app.post('/links', Auth.isAuth, (req, res, next) => {
   var url = req.body.url;
+  // console.log('@@@@@@@@@2',!models.Links.isValidUrl(url))
   if (!models.Links.isValidUrl(url)) {
     // send back a 404 if link is not valid
     return res.sendStatus(404);
@@ -68,26 +71,49 @@ app.post('/links',
     })
     .error(error => {
       res.status(500).send(error);
+
     })
     .catch(link => {
       res.status(200).send(link);
     });
+
 });
 
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+
+app.get('/signup', (req, res) => {
+  res.render('signup');
+});
+
 app.post('/signup', (req, res, next) => {
   var username = req.body.username;
   var password = req.body.password;
   // var users = new Users();
-  User.create({username, password}).then((succes) => {
-    res.redirect('/');
-    
-  }).catch((failed) => {
-    res.redirect('/signup');
-  });
-  // next();
+  // console.log(username, password);
+  return models.Users.get({username})
+    .then((user) => {
+      if (user) {
+        throw user;
+      }
+      return models.Users.create({username, password});
+    })
+    .then(results=> {
+      return models.Sessions.update({ hash: req.session.hash }, { userId: results.insertId });
+    })
+    .then(() => {
+      res.redirect('/');
+    })
+    .error(error => {
+      res.status(500).send(error);
+    })
+    .catch(user => {
+      res.redirect('/signup');
+    });
+});
+app.get('/login', (req, res) => {
+  res.render('login');
 });
 
 app.post('/login', (req, res, next) => {
@@ -95,28 +121,31 @@ app.post('/login', (req, res, next) => {
   var username = req.body.username;
   var attempted = req.body.password;
   // console.log(req)
-  var user = User.get({'username': username}).then((success) => {
+  
+  // console.log(req.session, '*******LOGIN SESSION');
+  return models.Users.get({username})
+    .then((success) => {
 
-    if (!success) {
-      throw success;
-    }
-    var password = success.password;
-    var salt = success.salt;
-    models.Sessions.create().then( (result) => {
-      // console.log('FROM CREATE: ', result);
-    });
-   
-    // console.log(User.compare(attempted, password, salt));
-    if (User.compare(attempted, password, salt)) {
+      var password = success.password;
+      var salt = success.salt;
+      // console.log(!success, '!!!!!!!!!!!!!!!')
+      // console.log('@@@@@@@@@@@@@@@@@2',models.Users.compare(attempted, password, salt))
+      if (!success || !models.Users.compare(attempted, password, salt)) {
+        throw new Error('username and password do not match');
+      }
+      // console.log(req.session, '**** success login');
+      return models.Sessions.update({ hash: req.session.hash }, { userId: success.id });
+    })
+    .then(() => {
       res.redirect('/');
-    } else {
-      res.redirect('/login');
-    }
-
-  }).catch((reject) => {
+    })
+    .catch(() => {
     // console.log('reject!', reject);
-    res.redirect('/login');
-  });
+      res.redirect('/login');
+    })
+    .error((error) => {
+      res.status(500).send(error);
+    });
 // .then((success) => {
 //     console.log('SUCCESS LOGIN', success);
 //     res.redirect('/');
@@ -125,6 +154,19 @@ app.post('/login', (req, res, next) => {
 //     res.redirect('/login');
 //   });
 });
+
+app.get('/logout', (req, res, next) => {
+  return models.Sessions.delete({hash: req.cookies.shortlyid  })
+    .then( (results) => {
+      // console.log(results, 'RESULTS***');
+      res.clearCookie('shortlyid');
+      // console.log(req.cookies, '@@@@@@@@@@@')  
+      res.redirect('/login');  
+    })
+    .error( (error) => {
+      res.status(500).send(error);
+    });
+}); 
 
 
 /************************************************************/
